@@ -4,7 +4,10 @@ services:
     restart: unless-stopped
 
     volumes:
-      - ./data:/srv/http
+      - /srv/volumes/ziggymirror/http:/srv/http
+
+    environment:
+      DOWNLOAD_CONCURRENCY: 1
 
     ports:
       - 8009:80

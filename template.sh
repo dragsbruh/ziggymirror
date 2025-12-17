@@ -51,7 +51,7 @@ EOF
 
   while IFS='=' read -r target tarball size; do
     echo "<li><a href=\"/$(basename "$tarball")\">$target</a> ($(numfmt "$size"))</li>"
-  done < <(echo "$releases" | jq 'to_entries[] | select (.value | type == "object") | "\(.key)=\(.value.tarball)=\(.value.size)"' --raw-output)
+  done < <(echo "$releases" | jq -r 'to_entries[] | select (.value | type == "object") | "\(.key)=\(.value.tarball)=\(.value.size)"' )
 
   echo "</ul></li>"
 
@@ -59,7 +59,7 @@ EOF
         </ul>
       </li>
 EOF
-done < <(jq 'to_entries[] | "\(.key)=\(.value)=\(.value.date)=\(.value.docs)=\(.value.notes)=\(.value.stdDocs)"' "$INDEX_JSON_FILE" --raw-output)
+done < <(jq -r 'to_entries[] | "\(.key)=\(.value)=\(.value.date)=\(.value.docs)=\(.value.notes)=\(.value.stdDocs)"' "$INDEX_JSON_FILE")
 
 cat <<EOF
     </ul>

@@ -101,7 +101,7 @@ download_tarball() {
 }
 
 echo "info: parsing download index"
-job_list=$(jq -r 'to_entries[] | .value | to_entries[] | select(.value | type == "object") | ."\(.key)=\(.value)"' "$INDEX_JSON_FILE" || {
+job_list=$(jq -r 'to_entries[] | .value | to_entries[] | select(.value | type == "object") | "\(.key)=\(.value)"' "$INDEX_JSON_FILE" || {
   echo "error: could not parse download index"
   exit 1
 })
@@ -110,7 +110,7 @@ readarray -t jobs_array <<< "$job_list"
 echo "info: downloading tarballs"
 for line in "${jobs_array[@]}"; do
   IFS='=' read -r version value <<< "$line"
-  IFS='=' read -r shasum source_tarball <<< "$(jq '"\(.shasum)=\(.tarball)"' <<< "$value")"
+  IFS='=' read -r shasum source_tarball <<< "$(jq -r '"\(.shasum)=\(.tarball)"' <<< "$value")"
 
   if [ ! -n "$SYNC_MASTER" ] && [ "$version" = "master" ]; then
     continue
@@ -122,7 +122,7 @@ for line in "${jobs_array[@]}"; do
       sleep 0.1
   done
 
-  echo download_tarball "$tarball_name" "$shasum" &
+  download_tarball "$tarball_name" "$shasum" &
 done
 
 wait
