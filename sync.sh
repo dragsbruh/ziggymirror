@@ -79,7 +79,7 @@ download_tarball() {
 
       echo "info: verifying minisign for '$tarball_name'"
       printf '%s\n%s\n' 'untrusted comment: minisign public key' "$MINISIGN_PUBKEY" | minisign -Vm "$temp_tarball" -x "$temp_minisign" -p /dev/stdin || {
-        echo "error: could not verify minisign for tarball '$temp_tarball' from mirror '$mirror_root'"
+        echo "error: could not verify minisign for tarball '$tarball_name' from mirror '$mirror_root'"
         continue
       }
 
@@ -87,11 +87,12 @@ download_tarball() {
       mv "$temp_minisign" "$out_minisign"
 
       found=1
-      echo "info: completed download of '$temp_tarball' from '$mirror_root'"
+      echo "info: completed download of '$tarball_name' from '$mirror_root'"
       break
     else
       echo "info: tarball '$tarball_name' already exists, skipping"
       found=1
+      break
     fi
   done < <(shuf "$community_mirrors_current")
 
