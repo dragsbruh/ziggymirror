@@ -1,0 +1,10 @@
+services:
+  ziggymirror:
+    build: .
+    restart: unless-stopped
+
+    volumes:
+      - ./data:/srv/http
+
+    ports:
+      - 8009:80
