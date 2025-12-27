@@ -34,14 +34,14 @@ echo "info: fetching download index"
 {
   temp_index=$TEMP_DIR/index.json
   wget -q -O "$temp_index" "$DOWNLOAD_INDEX"
-  mv "$temp_index" "$INDEX_JSON_FILE"
+  cp "$temp_index" "$INDEX_JSON_FILE"
 } || {
   echo "error: failed to get download index"
   exit 1
 }
 
 echo "info: generating index.html template"
-INDEX_JSON_FILE=${INDEX_JSON_FILE} /src/template.sh > "$INDEX_HTML_FILE"
+INDEX_JSON_FILE=${INDEX_JSON_FILE} "$TEMPLATE_SCRIPT" > "$INDEX_HTML_FILE"
 
 download_tarball() {
   local tarball_name=$1
@@ -104,6 +104,8 @@ download_tarball() {
 echo "info: parsing download index"
 readarray -t jobs_array <<< "$(jq -r 'to_entries[] | .key as $p | .value | to_entries[] | .value | select(type == "object") | "\($p)=\(.tarball)=\(.shasum)"' "$INDEX_JSON_FILE")"
 
+declare -A fresh_files
+
 echo "info: downloading tarballs"
 for line in "${jobs_array[@]}"; do
   IFS='=' read -r version tarball shasum <<< "$line"
@@ -112,12 +114,27 @@ for line in "${jobs_array[@]}"; do
     continue
   fi
 
+  ball_name=$(basename "$tarball")
+
+  fresh_files[$ball_name]="$version"
+
   while [ "$(jobs -rp | wc -l)" -ge "$DOWNLOAD_CONCURRENCY" ]; do
       sleep 0.1
   done
 
-  download_tarball "$(basename "$tarball")" "$shasum" &
+  download_tarball "$ball_name" "$shasum" &
 done
 
 wait
 echo "info: download jobs completed"
+
+if [ -n "$CLEANUP_OLD" ]; then
+  echo "info: cleaning up old tarballs"
+  for path in "$HTTP_DIR"/zig*; do
+    ball_name=$(basename "${path%.minisig}")
+    [[ -v fresh_files[$ball_name] ]] || {
+      echo "removing old file probably $ball_name"
+      rm "$path"
+    }
+  done
+fi

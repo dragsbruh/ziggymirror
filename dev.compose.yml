@@ -1,11 +1,11 @@
 services:
   ziggymirror:
-    image: ghcr.io/dragsbruh/ziggymirror:latest
-    restart: unless-stopped
+    build: .
+    restart: no
 
     volumes:
       - ./.data/http:/srv/http
-      # - ./.data/tmp:/tmp/zigtemp/
+      - ./.data/tmp:/tmp/zigtemp/
 
     environment:
       PORT: 80

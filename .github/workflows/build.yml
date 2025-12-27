@@ -1,0 +1,31 @@
+name: build docker image
+
+on:
+  push:
+    tags:
+      - v*
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    env:
+      IMAGE: ghcr.io/${{ github.repository }}
+      TAG: ${{ github.ref_name }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: login to ghcr
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: build image
+        run: docker build -t $IMAGE:latest .
+
+      - name: tag image
+        run: docker tag $IMAGE:latest $IMAGE:$TAG
+
+      - name: push image
+        run: |
+          docker push $IMAGE:latest
+          docker push $IMAGE:$TAG

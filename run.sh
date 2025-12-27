@@ -6,7 +6,7 @@ mkdir -p "$HTTP_DIR"
 
 while true; do
   echo "info: triggering sync"
-  /src/sync.sh
+  "$SYNC_SCRIPT"
   sleep "$SYNC_INTERVAL"
 done &
 
