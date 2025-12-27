@@ -102,25 +102,21 @@ download_tarball() {
 }
 
 echo "info: parsing download index"
-job_list=$(jq -r 'to_entries[] | "\(.key)=\(.value)"' "$INDEX_JSON_FILE")
-readarray -t jobs_array <<< "$job_list"
+readarray -t jobs_array <<< "$(jq -r 'to_entries[] | .key as $p | .value | to_entries[] | .value | select(type == "object") | "\($p)=\(.tarball)=\(.shasum)"' "$INDEX_JSON_FILE")"
 
 echo "info: downloading tarballs"
 for line in "${jobs_array[@]}"; do
-  IFS='=' read -r version value <<< "$line"
-  IFS='=' read -r shasum source_tarball <<< "$(jq -r 'to_entries[] | select(.value | type == "object") | .value | "\(.shasum)=\(.tarball)"' <<< "$value")"
+  IFS='=' read -r version tarball shasum <<< "$line"
 
   if [ ! -n "$SYNC_MASTER" ] && [ "$version" = "master" ]; then
     continue
   fi
 
-  tarball_name=$(basename "$source_tarball")
-
   while [ "$(jobs -rp | wc -l)" -ge "$DOWNLOAD_CONCURRENCY" ]; do
       sleep 0.1
   done
 
-  download_tarball "$tarball_name" "$shasum" &
+  download_tarball "$(basename "$tarball")" "$shasum" &
 done
 
 wait
